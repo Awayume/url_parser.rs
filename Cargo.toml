@@ -1,0 +1,38 @@
+[package]
+name = "url_parser"
+version = "0.1.0-alpha0"
+authors = [
+    "Awayume <dev@awayume.jp>",
+]
+edition = "2021"
+rust-version = "1.70"
+description = "A URL parser written in Rust."
+documentation = ""
+readme = "./README.md"
+homepage = ""
+repository = "https://github.com/Awayume/url_parser.rs"
+license = "Apache-2.0"
+keywords = [
+    "http",
+    "parser",
+    "punycode",
+    "query",
+    "url",
+]
+categories = [
+    "encoding",
+    "network-programming",
+    "parser-implementations",
+    "web-programming",
+]
+publish = false
+
+
+[dependencies]
+
+
+[dev-dependencies]
+
+
+[workspace]
+members = []

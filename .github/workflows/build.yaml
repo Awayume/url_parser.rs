@@ -1,0 +1,43 @@
+name: Build
+
+on:
+  push:
+    paths-ignore:
+      - '.git**'
+      - '**.md'
+      - 'LICENSE'
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Cache Cargo
+        uses: actions/cache@v3
+        with:
+          path: |
+            '~/.cargo'
+            './target'
+          key: cargo-${{ hashFiles('Cargo.lock') }}
+          restore-keys: cargo-
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build project
+        run: |
+          cargo build --all-features --workspace
+          echo version=$(grep -m1 '^version = ' Cargo.toml | sed -e 's/version = //' -e 's/"//g') >> $GITHUB_ENV
+          echo commit=$(echo ${{ github.sha }} | cut -c 1-7) >> $GITHUB_ENV
+        env:
+          RUSTFLAGS: '--cfg reqwest_unstable'
+
+      - name: Archive
+        uses: actions/upload-artifact@v3
+        with:
+          name: 'onyxwall_v${{ env.version }}@${{ env.commit }}'
+          path: |
+            target/debug/libdiscorust.rlib
