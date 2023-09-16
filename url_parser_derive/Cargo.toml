@@ -1,14 +1,13 @@
 [package]
-name = "url_parser"
+name = "url_parser_derive"
 version = "0.1.0-alpha0"
 authors = [
     "Awayume <dev@awayume.jp>",
 ]
 edition = "2021"
 rust-version = "1.70"
-description = "A URL parser written in Rust."
+description = "Derive macros for url_parser."
 documentation = ""
-readme = "./README.md"
 homepage = ""
 repository = "https://github.com/Awayume/url_parser.rs"
 license = "Apache-2.0"
@@ -28,14 +27,11 @@ categories = [
 publish = false
 
 
+[lib]
+proc-macro = true
+
+
 [dependencies]
-url_parser_derive = { version = "0.1.0-alpha0", path = "url_parser_derive" }
 
 
 [dev-dependencies]
-
-
-[workspace]
-members = [
-    "url_parser_derive",
-]
