@@ -32,6 +32,7 @@ proc-macro = true
 
 
 [dependencies]
+url_parser_trait = { version = "0.1.0-alpha0", path = "../url_parser_trait" }
 
 
 [dev-dependencies]
