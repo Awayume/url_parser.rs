@@ -1,14 +1,4 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
+// SPDX-FileCopyrightText: 2023 Awayume <dev@awayume.jp>
+// SPDX-License-Identifier: Apache-2.0
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
+pub use url_parser_trait::QueryParams;
