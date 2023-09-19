@@ -35,7 +35,6 @@ pub fn derive_query_params(input: TokenStream) -> TokenStream {
                 },
                 Type::Path(tpath) => {
                     for seg in tpath.path.segments {
-                        println!("{:?}", seg.ident);
                         if seg.ident == option_path.segments[0].ident {  // Option
                             query_generator = quote! {
                                 #query_generator
