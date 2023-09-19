@@ -68,7 +68,7 @@ pub fn derive_query_params(input: TokenStream) -> TokenStream {
             }
         }
         let expanded: TokenStream2 = quote! {
-            impl #impl_generics url_parser::QueryParams for #ident #ty_generics #where_clause {
+            impl #impl_generics QueryParams for #ident #ty_generics #where_clause {
                 fn to_query_params(&self) -> String {
                     let mut query: String = "?".to_string();
                     #query_generator
