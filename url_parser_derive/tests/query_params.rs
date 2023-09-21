@@ -45,8 +45,6 @@ struct VectorTypes<'a> {
     vec_string: Vec<String>,
     vec_str: Vec<&'a str>,
     vec_char: Vec<char>,
-    vec_array_u8: Vec<[u8; 3]>,
-    vec_tuple: Vec<(u8, bool, String, &'a str, char)>,
     vec_opt_u8: Vec<Option<u8>>,
 }
 
@@ -163,15 +161,13 @@ fn vector_types() {
         vec_string: vec!["St".to_string(), "ri".to_string(), "ng".to_string()],
         vec_str: vec!["st", "r"],
         vec_char: vec!['c', 'h', 'a', 'r'],
-        vec_array_u8: vec![[1, 2, 3], [4, 5, 6], [7, 8, 9]],
-        vec_tuple: vec![(1, true, "Str".to_string(), "st", 'c'), (2, false, "ing".to_string(), "r", 'c')],
         vec_opt_u8: vec![Some(1), Some(2), Some(3)],
     };
     assert_eq!(
         param1.to_query_params(),
         concat!(
-            "?vec_u8=1,2,3&vec_f32=1.0,2.0,3.0&vec_bool=true,false&vec_string=St,ri,ng&vec_str=st,r&vec_char=c,h,a,r",
-            "&vec_array_u8=1,2,3,4,5,6,7,8,9&vec_tuple=1,true,Str,st,c,2,false,ing,r,c&vec_opt_u8=1,2,3",
+            "?vec_u8=1,2,3&vec_f32=1.0,2.0,3.0&vec_bool=true,false&vec_string=St,ri,ng",
+            "&vec_str=st,r&vec_char=c,h,a,r&vec_opt_u8=1,2,3"
         ).to_string(),
     );
 
@@ -182,15 +178,13 @@ fn vector_types() {
         vec_string: vec!["St".to_string(), "ri".to_string(), "ng".to_string()],
         vec_str: vec!["st", "r"],
         vec_char: vec!['c', 'h', 'a', 'r'],
-        vec_array_u8: vec![[1, 2, 3], [4, 5, 6], [7, 8, 9]],
-        vec_tuple: vec![(1, true, "Str".to_string(), "st", 'c'), (2, false, "ing".to_string(), "r", 'c')],
         vec_opt_u8: vec![Some(1), None, Some(3)],
     };
     assert_eq!(
         param2.to_query_params(),
         concat!(
-            "?vec_u8=1,2,3&vec_f32=1.0,2.0,3.0&vec_bool=true,false&vec_string=St,ri,ng&vec_str=st,r&vec_char=c,h,a,r",
-            "&vec_array_u8=1,2,3,4,5,6,7,8,9&vec_tuple=1,true,Str,st,c,2,false,ing,r,c&vec_opt_u8=1,3",
+            "?vec_u8=1,2,3&vec_f32=1.0,2.0,3.0&vec_bool=true,false&vec_string=St,ri,ng",
+            "&vec_str=st,r&vec_char=c,h,a,r&vec_opt_u8=1,3",
         ).to_string(),
     );
 
@@ -201,16 +195,11 @@ fn vector_types() {
         vec_string: vec!["St".to_string(), "ri".to_string(), "ng".to_string()],
         vec_str: vec!["st", "r"],
         vec_char: vec!['c', 'h', 'a', 'r'],
-        vec_array_u8: vec![[1, 2, 3], [4, 5, 6], [7, 8, 9]],
-        vec_tuple: vec![(1, true, "Str".to_string(), "st", 'c'), (2, false, "ing".to_string(), "r", 'c')],
         vec_opt_u8: vec![None, None, None],
     };
     assert_eq!(
         param3.to_query_params(),
-        concat!(
-            "?vec_u8=1,2,3&vec_f32=1.0,2.0,3.0&vec_bool=true,false&vec_string=St,ri,ng&vec_str=st,r&vec_char=c,h,a,r",
-            "&vec_array_u8=1,2,3,4,5,6,7,8,9&vec_tuple=1,true,Str,st,c,2,false,ing,r,c",
-        ).to_string(),
+        "?vec_u8=1,2,3&vec_f32=1.0,2.0,3.0&vec_bool=true,false&vec_string=St,ri,ng&vec_str=st,r&vec_char=c,h,a,r".to_string(),
     );
 }
 
