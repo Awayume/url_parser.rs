@@ -21,14 +21,7 @@ pub fn derive_query_params(input: TokenStream) -> TokenStream {
             match field.ty {
                 Type::Array(tarray) => {
                     if let Type::Path(_) = *tarray.elem {
-                        query_generator = quote! {
-                            #query_generator
-                            // query: String
-                            let mut val: String = self.#field_ident.iter()
-                                .fold(String::new(), |acc, v| format!("{}{},", acc, v));
-                            val.pop();
-                            query += &format!("{}={}&", stringify!(#field_ident), val);
-                        };
+                        query_generator = parse_array(&field_ident, query_generator);
                     } else {
                         query_generator = unsupported_field_type_error(&field_ident, query_generator);
                     }
@@ -36,28 +29,11 @@ pub fn derive_query_params(input: TokenStream) -> TokenStream {
                 Type::Path(tpath) => {
                     for seg in tpath.path.segments {
                         if seg.ident == option_path.segments[0].ident {  // Option
-                            query_generator = quote! {
-                                #query_generator
-                                // query: String
-                                if let Some(val) = self.#field_ident {
-                                    query += &format!("{}={}&", stringify!(#field_ident), val);
-                                }
-                            };
+                            query_generator = parse_option(&field_ident, query_generator);
                         } else if seg.ident == vec_path.segments[0].ident {  // Vec
-                            query_generator = quote! {
-                                #query_generator
-                                // query: String
-                                let mut val: String = self.#field_ident.iter()
-                                    .fold(String::new(), |acc, v| format!("{}{},", acc, v));
-                                val.pop();
-                                query += &format!("{}={}&", stringify!(#field_ident), val);
-                            };
+                            query_generator = parse_vector(&field_ident, query_generator);
                         } else {  // Others
-                            query_generator = quote! {
-                                #query_generator
-                                // query: String
-                                query += &format!("{}={}&", stringify!(#field_ident), self.#field_ident);
-                            };
+                            query_generator = parse_impl_display(&field_ident, query_generator);
                         }
                     }
                 },
@@ -86,6 +62,59 @@ pub fn derive_query_params(input: TokenStream) -> TokenStream {
 }
 
 
+#[inline]
+fn parse_array(field_ident: &Ident, mut query_generator: TokenStream2) -> TokenStream2 {
+    query_generator = quote! {
+        #query_generator
+        // query: String
+        let mut val: String = self.#field_ident.iter()
+            .fold(String::new(), |acc, v| format!("{}{},", acc, v));
+        val.pop();
+        query += &format!("{}={}&", stringify!(#field_ident), val);
+    };
+    query_generator
+}
+
+
+#[inline]
+fn parse_option(field_ident: &Ident, mut query_generator: TokenStream2) -> TokenStream2 {
+    query_generator = quote! {
+        #query_generator
+        // query: String
+        if let Some(val) = self.#field_ident {
+            query += &format!("{}={}&", stringify!(#field_ident), val);
+        }
+    };
+    query_generator
+}
+
+
+#[inline]
+fn parse_vector(field_ident: &Ident, mut query_generator: TokenStream2) -> TokenStream2 {
+    query_generator = quote! {
+        #query_generator
+        // query: String
+        let mut val: String = self.#field_ident.iter()
+            .fold(String::new(), |acc, v| format!("{}{},", acc, v));
+        val.pop();
+        query += &format!("{}={}&", stringify!(#field_ident), val);
+    };
+    query_generator
+}
+
+
+#[inline]
+fn parse_impl_display(field_ident: &Ident, mut query_generator: TokenStream2) -> TokenStream2 {
+    query_generator = quote! {
+        #query_generator
+        // query: String
+        query += &format!("{}={}&", stringify!(#field_ident), self.#field_ident);
+    };
+    query_generator
+}
+
+
+#[inline]
 fn unsupported_field_type_error(field_ident: &Ident, mut query_generator: TokenStream2) -> TokenStream2 {
     println!("The type of the field {} does not supported.", field_ident);
     query_generator = quote! {
