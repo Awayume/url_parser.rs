@@ -20,10 +20,19 @@ pub fn derive_query_params(input: TokenStream) -> TokenStream {
             let field_ident: Ident = field.ident.unwrap();
             match field.ty {
                 Type::Array(tarray) => {
-                    if let Type::Path(_) = *tarray.elem {
-                        query_generator = parse_array(&field_ident, query_generator);
-                    } else {
-                        query_generator = unsupported_field_type_error(&field_ident, query_generator);
+                    match *tarray.elem {
+                        Type::Path(_) => {
+                            query_generator = parse_array(&field_ident, query_generator);
+                        },
+                        Type::Ptr(tptr) => {
+                            todo!();
+                        },
+                        Type::Reference(tref) => {
+                            todo!();
+                        },
+                        _ => {
+                            query_generator = unsupported_field_type_error(&field_ident, query_generator);
+                        },
                     }
                 },
                 Type::Path(tpath) => {
@@ -36,6 +45,18 @@ pub fn derive_query_params(input: TokenStream) -> TokenStream {
                             query_generator = parse_impl_display(&field_ident, query_generator);
                         }
                     }
+                },
+                Type::Ptr(tptr) => {
+                    todo!();
+                },
+                Type::Reference(tref) => {
+                    todo!();
+                },
+                Type::Slice(tslice) => {
+                    todo!();
+                },
+                Type::Tuple(ttuple) => {
+                    todo!();
                 },
                 _ => {
                     query_generator = unsupported_field_type_error(&field_ident, query_generator);
