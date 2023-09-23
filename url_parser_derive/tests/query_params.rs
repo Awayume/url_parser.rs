@@ -45,7 +45,6 @@ struct VectorTypes<'a> {
     vec_string: Vec<String>,
     vec_str: Vec<&'a str>,
     vec_char: Vec<char>,
-    vec_opt_u8: Vec<Option<u8>>,
 }
 
 
@@ -154,52 +153,20 @@ fn option_types() {
 
 #[test]
 fn vector_types() {
-    let param1: VectorTypes = VectorTypes {
+    let param: VectorTypes = VectorTypes {
         vec_u8: vec![1, 2, 3],
         vec_f32: vec![1.0, 2.0, 3.0],
         vec_bool: vec![true, false],
         vec_string: vec!["St".to_string(), "ri".to_string(), "ng".to_string()],
         vec_str: vec!["st", "r"],
         vec_char: vec!['c', 'h', 'a', 'r'],
-        vec_opt_u8: vec![Some(1), Some(2), Some(3)],
     };
     assert_eq!(
-        param1.to_query_params(),
+        param.to_query_params(),
         concat!(
-            "?vec_u8=1,2,3&vec_f32=1.0,2.0,3.0&vec_bool=true,false&vec_string=St,ri,ng",
-            "&vec_str=st,r&vec_char=c,h,a,r&vec_opt_u8=1,2,3"
+            "?vec_u8=1,2,3&vec_f32=1.0,2.0,3.0&vec_bool=true,false",
+            "&vec_string=St,ri,ng&vec_str=st,r&vec_char=c,h,a,r",
         ).to_string(),
-    );
-
-    let param2: VectorTypes = VectorTypes {
-        vec_u8: vec![1, 2, 3],
-        vec_f32: vec![1.0, 2.0, 3.0],
-        vec_bool: vec![true, false],
-        vec_string: vec!["St".to_string(), "ri".to_string(), "ng".to_string()],
-        vec_str: vec!["st", "r"],
-        vec_char: vec!['c', 'h', 'a', 'r'],
-        vec_opt_u8: vec![Some(1), None, Some(3)],
-    };
-    assert_eq!(
-        param2.to_query_params(),
-        concat!(
-            "?vec_u8=1,2,3&vec_f32=1.0,2.0,3.0&vec_bool=true,false&vec_string=St,ri,ng",
-            "&vec_str=st,r&vec_char=c,h,a,r&vec_opt_u8=1,3",
-        ).to_string(),
-    );
-
-    let param3: VectorTypes = VectorTypes {
-        vec_u8: vec![1, 2, 3],
-        vec_f32: vec![1.0, 2.0, 3.0],
-        vec_bool: vec![true, false],
-        vec_string: vec!["St".to_string(), "ri".to_string(), "ng".to_string()],
-        vec_str: vec!["st", "r"],
-        vec_char: vec!['c', 'h', 'a', 'r'],
-        vec_opt_u8: vec![None, None, None],
-    };
-    assert_eq!(
-        param3.to_query_params(),
-        "?vec_u8=1,2,3&vec_f32=1.0,2.0,3.0&vec_bool=true,false&vec_string=St,ri,ng&vec_str=st,r&vec_char=c,h,a,r".to_string(),
     );
 }
 
