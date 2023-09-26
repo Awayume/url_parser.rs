@@ -76,17 +76,17 @@ fn is_vec(tpath: &TypePath) -> bool {
 #[inline]
 fn parse_type_array(field_ident: &Ident, tarray: TypeArray, mut query_generator: TokenStream2) -> TokenStream2 {
     match *tarray.elem {
-        Type::Path(tpath) => query_generator = parse_array(&field_ident, tpath, query_generator),
+        Type::Path(tpath) => query_generator = parse_slice(&field_ident, tpath, query_generator),
         Type::Ptr(tptr) => {
             if let Ok(tpath) = unwrap_boxed_type_path(tptr.elem) {
-                query_generator = parse_array(&field_ident, tpath, query_generator);
+                query_generator = parse_slice(&field_ident, tpath, query_generator);
             } else {
                 query_generator = unsupported_field_type_error(&field_ident, query_generator);
             }
         },
         Type::Reference(tref) => {
             if let Ok(tpath) = unwrap_boxed_type_path(tref.elem) {
-                query_generator = parse_array(&field_ident, tpath, query_generator);
+                query_generator = parse_slice(&field_ident, tpath, query_generator);
             } else {
                 query_generator = unsupported_field_type_error(&field_ident, query_generator);
             }
@@ -139,7 +139,7 @@ fn parse_type_tuple(field_ident: &Ident, ttuple: TypeTuple, mut query_generator:
 
 
 #[inline]
-fn parse_array(field_ident: &Ident, tpath: TypePath, mut query_generator: TokenStream2) -> TokenStream2 {
+fn parse_slice(field_ident: &Ident, tpath: TypePath, mut query_generator: TokenStream2) -> TokenStream2 {
     if is_option(&tpath) || is_vec(&tpath) {
         query_generator = unsupported_field_type_error(field_ident, query_generator);
     } else {
