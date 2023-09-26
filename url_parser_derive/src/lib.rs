@@ -101,14 +101,12 @@ fn parse_type_array(field_ident: &Ident, tarray: TypeArray, mut query_generator:
 fn parse_type_path(field_ident: &Ident, tpath: TypePath, mut query_generator: TokenStream2) -> TokenStream2 {
     let option_path: Path = parse_quote!(Option);
     let vec_path: Path = parse_quote!(Vec);
-    for seg in tpath.path.segments {
-        if seg.ident == option_path.segments[0].ident {  // Option
-            query_generator = parse_option(&field_ident, query_generator);
-        } else if seg.ident == vec_path.segments[0].ident {  // Vec
-            query_generator = parse_vector(&field_ident, query_generator);
-        } else {  // Others
-            query_generator = parse_impl_display(&field_ident, query_generator);
-        }
+    if tpath.path.segments[0].ident == option_path.segments[0].ident {  // Option
+        query_generator = parse_option(&field_ident, query_generator);
+    } else if tpath.path.segments[0].ident == vec_path.segments[0].ident {  // Vec
+        query_generator = parse_vector(&field_ident, query_generator);
+    } else {  // Others
+        query_generator = parse_impl_display(&field_ident, query_generator);
     }
     query_generator
 }
