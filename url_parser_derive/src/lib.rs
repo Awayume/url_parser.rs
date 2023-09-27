@@ -126,7 +126,11 @@ fn parse_type_reference(field_ident: &Ident, tref: TypeReference, mut query_gene
 
 #[inline]
 fn parse_type_slice(field_ident: &Ident, tslice: TypeSlice, mut query_generator: TokenStream2) -> TokenStream2 {
-    todo!();
+    if let Ok(tpath) = unwrap_boxed_type_path(tslice.elem) {
+        parse_slice(field_ident, tpath, query_generator)
+    } else {
+        unsupported_field_type_error(field_ident, query_generator)
+    }
 }
 
 
