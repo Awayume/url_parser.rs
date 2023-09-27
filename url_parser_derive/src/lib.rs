@@ -136,7 +136,30 @@ fn parse_type_slice(field_ident: &Ident, tslice: TypeSlice, mut query_generator:
 
 #[inline]
 fn parse_type_tuple(field_ident: &Ident, ttuple: TypeTuple, mut query_generator: TokenStream2) -> TokenStream2 {
-    todo!();
+    if ttuple.elems.iter().all(|ty: &Type| -> bool {
+        match ty {
+            Type::Path(tpath) => !(is_option(&tpath) || is_vec(&tpath)),
+            Type::Ptr(tptr) => {
+                if let Ok(tpath) = unwrap_boxed_type_path(tptr.elem.clone()) {
+                    !(is_option(&tpath) || is_vec(&tpath))
+                } else {
+                    false
+                }
+            },
+            Type::Reference(tref) => {
+                if let Ok(tpath) = unwrap_boxed_type_path(tref.elem.clone()) {
+                    !(is_option(&tpath) || is_vec(&tpath))
+                } else {
+                    false
+                }
+            },
+            _ => false,
+        }
+    }) {
+        parse_tuple(field_ident, query_generator)
+    } else {
+        unsupported_field_type_error(field_ident, query_generator)
+    }
 }
 
 
@@ -154,6 +177,20 @@ fn parse_slice(field_ident: &Ident, tpath: TypePath, mut query_generator: TokenS
             query += &format!("{}={}&", stringify!(#field_ident), val);
         };
     }
+    query_generator
+}
+
+
+#[inline]
+fn parse_tuple(field_ident: &Ident, mut query_generator: TokenStream2) -> TokenStream2 {
+    query_generator = quote! {
+        #query_generator
+        // query: String
+            let mut val: String = self.#field_ident.iter()
+                .fold(String::new(), |acc, v| format!("{}{},", acc, v));
+            val.pop();
+            query += &format!("{}={}&", stringify!(#field_ident), val);
+    };
     query_generator
 }
 
