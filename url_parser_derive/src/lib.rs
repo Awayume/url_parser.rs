@@ -6,8 +6,8 @@ use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use syn::{
-    parse_macro_input, parse_quote, Path, Ident, Item, Type, TypeArray, TypePath, TypePtr,
-    TypeReference, TypeSlice, TypeTuple,
+    GenericArgument, parse_macro_input, parse_quote, Path, PathArguments, Ident, Item, Type,
+    TypeArray, TypePath, TypePtr, TypeReference, TypeSlice, TypeTuple,
 };
 
 
@@ -104,7 +104,7 @@ fn parse_type_path(field_ident: &Ident, tpath: TypePath, mut query_generator: To
     if tpath.path.segments[0].ident == option_path.segments[0].ident {  // Option
         query_generator = parse_option(&field_ident, query_generator);
     } else if tpath.path.segments[0].ident == vec_path.segments[0].ident {  // Vec
-        query_generator = parse_vector(&field_ident, query_generator);
+        query_generator = parse_vector(&field_ident, tpath, query_generator);
     } else {  // Others
         query_generator = parse_impl_display(&field_ident, query_generator);
     }
@@ -168,16 +168,33 @@ fn parse_option(field_ident: &Ident, mut query_generator: TokenStream2) -> Token
 
 
 #[inline]
-fn parse_vector(field_ident: &Ident, mut query_generator: TokenStream2) -> TokenStream2 {
-    query_generator = quote! {
-        #query_generator
-        // query: String
-        let mut val: String = self.#field_ident.iter()
-            .fold(String::new(), |acc, v| format!("{}{},", acc, v));
-        val.pop();
-        query += &format!("{}={}&", stringify!(#field_ident), val);
-    };
-    query_generator
+fn parse_vector(field_ident: &Ident, tpath: TypePath, mut query_generator: TokenStream2) -> TokenStream2 {
+    if let PathArguments::AngleBracketed(garg) = &tpath.path.segments[0].arguments {
+        if let GenericArgument::Type(ty) = &garg.args[0] {
+            match ty {
+                Type::Path(tpath) => parse_slice(field_ident, tpath.clone(), query_generator),
+                Type::Ptr(tptr) => {
+                    if let Ok(tpath) = unwrap_boxed_type_path(tptr.elem.clone()) {
+                        parse_slice(&field_ident, tpath, query_generator)
+                    } else {
+                        unsupported_field_type_error(&field_ident, query_generator)
+                    }
+                },
+                Type::Reference(tref) => {
+                    if let Ok(tpath) = unwrap_boxed_type_path(tref.elem.clone()) {
+                        parse_slice(&field_ident, tpath, query_generator)
+                    } else {
+                        unsupported_field_type_error(&field_ident, query_generator)
+                    }
+                },
+                _ => unsupported_field_type_error(field_ident, query_generator),
+            }
+        } else {
+            unsupported_field_type_error(field_ident, query_generator)
+        }
+    } else {
+        unsupported_field_type_error(field_ident, query_generator)
+    }
 }
 
 
