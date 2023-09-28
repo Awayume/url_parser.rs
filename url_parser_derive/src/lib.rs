@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use proc_macro::TokenStream;
+use std::str::FromStr;
 
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
@@ -172,7 +173,7 @@ fn parse_type_tuple(field_ident: &Ident, ttuple: TypeTuple, mut query_generator:
             _ => false,
         }
     }) {
-        parse_tuple(field_ident, query_generator)
+        parse_tuple(field_ident, ttuple.elems.len(), query_generator)
     } else {
         unsupported_field_type_error(field_ident, query_generator)
     }
@@ -198,14 +199,18 @@ fn parse_slice(field_ident: &Ident, tpath: TypePath, mut query_generator: TokenS
 
 
 #[inline]
-fn parse_tuple(field_ident: &Ident, mut query_generator: TokenStream2) -> TokenStream2 {
+fn parse_tuple(field_ident: &Ident, size: usize, mut query_generator: TokenStream2) -> TokenStream2 {
+    let mut template: String = "{},".to_string().repeat(size);
+    template.pop();
+    let mut values: TokenStream2 = TokenStream2::new();
+    for i in 0..size {
+        let i: TokenStream2 = TokenStream2::from_str(&i.to_string()).unwrap();
+        values = quote!(#values self.#field_ident.#i,);
+    }
     query_generator = quote! {
         #query_generator
         // query: String
-            let mut val: String = self.#field_ident.iter()
-                .fold(String::new(), |acc, v| format!("{}{},", acc, v));
-            val.pop();
-            query += &format!("{}={}&", stringify!(#field_ident), val);
+        query += &format!(#template, #values);
     };
     query_generator
 }
