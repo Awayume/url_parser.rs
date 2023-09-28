@@ -74,7 +74,6 @@ fn is_vec(tpath: &TypePath) -> bool {
 }
 
 
-#[inline]
 fn parse_type_array(field_ident: &Ident, tarray: TypeArray, mut query_generator: TokenStream2) -> TokenStream2 {
     match *tarray.elem {
         Type::Path(tpath) => query_generator = parse_slice(&field_ident, tpath, query_generator),
@@ -98,7 +97,6 @@ fn parse_type_array(field_ident: &Ident, tarray: TypeArray, mut query_generator:
 }
 
 
-#[inline]
 fn parse_type_path(field_ident: &Ident, tpath: TypePath, mut query_generator: TokenStream2) -> TokenStream2 {
     let option_path: Path = parse_quote!(Option);
     let vec_path: Path = parse_quote!(Vec);
@@ -113,7 +111,6 @@ fn parse_type_path(field_ident: &Ident, tpath: TypePath, mut query_generator: To
 }
 
 
-#[inline]
 fn parse_type_ptr(field_ident: &Ident, tptr: TypePtr, mut query_generator: TokenStream2) -> TokenStream2 {
     match *tptr.elem {
         Type::Array(tarray) => parse_type_array(field_ident, tarray, query_generator),
@@ -127,7 +124,6 @@ fn parse_type_ptr(field_ident: &Ident, tptr: TypePtr, mut query_generator: Token
 }
 
 
-#[inline]
 fn parse_type_reference(field_ident: &Ident, tref: TypeReference, mut query_generator: TokenStream2) -> TokenStream2 {
     match *tref.elem {
         Type::Array(tarray) => parse_type_array(field_ident, tarray, query_generator),
@@ -141,7 +137,6 @@ fn parse_type_reference(field_ident: &Ident, tref: TypeReference, mut query_gene
 }
 
 
-#[inline]
 fn parse_type_slice(field_ident: &Ident, tslice: TypeSlice, mut query_generator: TokenStream2) -> TokenStream2 {
     if let Ok(tpath) = unwrap_boxed_type_path(tslice.elem) {
         parse_slice(field_ident, tpath, query_generator)
@@ -151,7 +146,6 @@ fn parse_type_slice(field_ident: &Ident, tslice: TypeSlice, mut query_generator:
 }
 
 
-#[inline]
 fn parse_type_tuple(field_ident: &Ident, ttuple: TypeTuple, mut query_generator: TokenStream2) -> TokenStream2 {
     if ttuple.elems.iter().all(|ty: &Type| -> bool {
         match ty {
@@ -180,7 +174,6 @@ fn parse_type_tuple(field_ident: &Ident, ttuple: TypeTuple, mut query_generator:
 }
 
 
-#[inline]
 fn parse_slice(field_ident: &Ident, tpath: TypePath, mut query_generator: TokenStream2) -> TokenStream2 {
     if is_option(&tpath) || is_vec(&tpath) {
         query_generator = unsupported_field_type_error(field_ident, query_generator);
@@ -198,7 +191,6 @@ fn parse_slice(field_ident: &Ident, tpath: TypePath, mut query_generator: TokenS
 }
 
 
-#[inline]
 fn parse_tuple(field_ident: &Ident, size: usize, mut query_generator: TokenStream2) -> TokenStream2 {
     let mut template: String = "{},".to_string().repeat(size);
     template.pop();
@@ -216,7 +208,6 @@ fn parse_tuple(field_ident: &Ident, size: usize, mut query_generator: TokenStrea
 }
 
 
-#[inline]
 fn parse_option(field_ident: &Ident, mut query_generator: TokenStream2) -> TokenStream2 {
     query_generator = quote! {
         #query_generator
@@ -229,7 +220,6 @@ fn parse_option(field_ident: &Ident, mut query_generator: TokenStream2) -> Token
 }
 
 
-#[inline]
 fn parse_vector(field_ident: &Ident, tpath: TypePath, mut query_generator: TokenStream2) -> TokenStream2 {
     if let PathArguments::AngleBracketed(garg) = &tpath.path.segments[0].arguments {
         if let GenericArgument::Type(ty) = &garg.args[0] {
@@ -260,7 +250,6 @@ fn parse_vector(field_ident: &Ident, tpath: TypePath, mut query_generator: Token
 }
 
 
-#[inline]
 fn parse_impl_display(field_ident: &Ident, mut query_generator: TokenStream2) -> TokenStream2 {
     query_generator = quote! {
         #query_generator
@@ -271,7 +260,6 @@ fn parse_impl_display(field_ident: &Ident, mut query_generator: TokenStream2) ->
 }
 
 
-#[inline]
 fn unsupported_field_type_error(field_ident: &Ident, mut query_generator: TokenStream2) -> TokenStream2 {
     println!("The type of the field {} does not supported.", field_ident);
     query_generator = quote! {
