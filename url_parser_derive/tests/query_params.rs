@@ -6,6 +6,9 @@ use url_parser_derive::QueryParams;
 use url_parser_trait::QueryParams;
 
 
+const TEST_DATA: &str = "rawptr";
+
+
 #[derive(QueryParams)]
 struct BasicTypes<'a> {
     u8: u8,
@@ -20,6 +23,8 @@ struct BasicTypes<'a> {
     array_str: [&'a str; 3],
     array_char: [char; 3],
     tuple: (u8, bool, String, &'a str, char),
+    slice: &'a [u8],
+    raw_ptr: *const &'a str,
 }
 
 
@@ -33,6 +38,8 @@ struct OptionTypes<'a> {
     opt_char: Option<char>,
     opt_array_u8: Option<[u8; 3]>,
     opt_tuple: Option<(u8, bool, String, &'a str, char)>,
+    opt_slice: Option<&'a [u8]>,
+    opt_raw_ptr: Option<*const &'a str>,
     opt_vec_u8: Option<Vec<u8>>,
 }
 
@@ -45,6 +52,7 @@ struct VectorTypes<'a> {
     vec_string: Vec<String>,
     vec_str: Vec<&'a str>,
     vec_char: Vec<char>,
+    vec_raw_ptr: Vec<*const &'a str>,
 }
 
 
@@ -91,12 +99,14 @@ fn basic_types() {
         array_str: ["a", "b", "c"],
         array_char: ['a', 'b', 'c'],
         tuple: (1, true, "String".to_string(), "str", 'c'),
+        slice: &[1, 2, 3],
+        raw_ptr: &TEST_DATA,
     };
     assert_eq!(
         param.to_query_params(),
         concat!(
             "?u8=1&f32=1.0&bool=true&string=String&str=str&char=c&array_u8=1,2,3&array_bool=true,false,true",
-            "&array_string=A,B,C&array_str=a,b,c&array_char=a,b,c&tuple=1,true,String, str,c",
+            "&array_string=A,B,C&array_str=a,b,c&array_char=a,b,c&tuple=1,true,String, str,c&slice=1,2,3&raw_ptr=rawptr",
         ).to_string(),
     );
 }
@@ -114,10 +124,12 @@ fn option_types() {
         opt_array_u8: Some([1, 2, 3]),
         opt_tuple: None,
         opt_vec_u8: Some(vec![1, 2, 3]),
+        opt_slice: None,
+        opt_raw_ptr: Some(&TEST_DATA),
     };
     assert_eq!(
         param1.to_query_params(),
-        "?opt_u8=1&opt_bool=true&opt_str=str&opt_array_u8=1,2,3&opt_vec_u8=1,2,3".to_string(),
+        "?opt_u8=1&opt_bool=true&opt_str=str&opt_array_u8=1,2,3&opt_vec_u8=1,2,3&opt_raw_ptr=rawptr".to_string(),
     );
 
     let param2: OptionTypes = OptionTypes {
@@ -130,10 +142,12 @@ fn option_types() {
         opt_array_u8: None,
         opt_tuple: Some((1, true, "String".to_string(), "str", 'c')),
         opt_vec_u8: None,
+        opt_slice: Some(&[1, 2, 3]),
+        opt_raw_ptr: None,
     };
     assert_eq!(
         param2.to_query_params(),
-        "?opt_f32=1.0&opt_string=String&opt_char=c&opt_tuple=1,true,String,str,c".to_string(),
+        "?opt_f32=1.0&opt_string=String&opt_char=c&opt_tuple=1,true,String,str,c&opt_slice=1,2,3".to_string(),
     );
 
     let param3: OptionTypes = OptionTypes {
@@ -146,6 +160,8 @@ fn option_types() {
         opt_array_u8: None,
         opt_tuple: None,
         opt_vec_u8: None,
+        opt_slice: None,
+        opt_raw_ptr: None,
     };
     assert_eq!(param3.to_query_params(), "".to_string());
 }
@@ -160,12 +176,13 @@ fn vector_types() {
         vec_string: vec!["St".to_string(), "ri".to_string(), "ng".to_string()],
         vec_str: vec!["st", "r"],
         vec_char: vec!['c', 'h', 'a', 'r'],
+        vec_raw_ptr: vec![&TEST_DATA, &TEST_DATA],
     };
     assert_eq!(
         param.to_query_params(),
         concat!(
             "?vec_u8=1,2,3&vec_f32=1.0,2.0,3.0&vec_bool=true,false",
-            "&vec_string=St,ri,ng&vec_str=st,r&vec_char=c,h,a,r",
+            "&vec_string=St,ri,ng&vec_str=st,r&vec_char=c,h,a,r&vec_raw_ptr=rawptr,rawptr",
         ).to_string(),
     );
 }
