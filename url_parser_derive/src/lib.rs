@@ -179,7 +179,19 @@ fn parse_type_tuple(field_ident: &Ident, ttuple: TypeTuple, query_generator: Tok
             _ => false,
         }
     }) {
-        parse_tuple(field_ident, ttuple.elems.len(), query_generator)
+        let size: usize = ttuple.elems.len();
+        let mut template: String = "{},".to_string().repeat(size);
+        template.pop();
+        let mut values: TokenStream2 = TokenStream2::new();
+        for i in 0..size {
+            let i: TokenStream2 = TokenStream2::from_str(&i.to_string()).unwrap();
+            values = quote!(#values self.#field_ident.#i,);
+        }
+        quote! {
+            #query_generator
+            // query: String
+            query += &format!(#template, #values);
+        }
     } else {
         unsupported_field_type_error(field_ident, query_generator)
     }
@@ -198,22 +210,6 @@ fn parse_slice(field_ident: &Ident, tpath: TypePath, query_generator: TokenStrea
             val.pop();
             query += &format!("{}={}&", stringify!(#field_ident), val);
         }
-    }
-}
-
-
-fn parse_tuple(field_ident: &Ident, size: usize, query_generator: TokenStream2) -> TokenStream2 {
-    let mut template: String = "{},".to_string().repeat(size);
-    template.pop();
-    let mut values: TokenStream2 = TokenStream2::new();
-    for i in 0..size {
-        let i: TokenStream2 = TokenStream2::from_str(&i.to_string()).unwrap();
-        values = quote!(#values self.#field_ident.#i,);
-    }
-    quote! {
-        #query_generator
-        // query: String
-        query += &format!(#template, #values);
     }
 }
 
