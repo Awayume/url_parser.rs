@@ -61,6 +61,20 @@ fn unwrap_boxed_type_path(tbox: Box<Type>) -> Result<TypePath, ()> {
 
 
 #[inline]
+fn get_type_argument(tpath: &TypePath) -> Result<Type, ()> {
+    if let PathArguments::AngleBracketed(garg) = &tpath.path.segments[0].arguments {
+        if let GenericArgument::Type(ty) = &garg.args[0] {
+            Ok(ty.clone())
+        } else {
+            Err(())
+        }
+    } else {
+        Err(())
+    }
+}
+
+
+#[inline]
 fn is_option(tpath: &TypePath) -> bool {
     let option_path: Path = parse_quote!(Option);
     tpath.path.segments[0].ident == option_path.segments[0].ident
@@ -101,7 +115,7 @@ fn parse_type_path(field_ident: &Ident, tpath: TypePath, mut query_generator: To
     let option_path: Path = parse_quote!(Option);
     let vec_path: Path = parse_quote!(Vec);
     if tpath.path.segments[0].ident == option_path.segments[0].ident {  // Option
-        query_generator = parse_option(&field_ident, query_generator);
+        query_generator = parse_option(&field_ident, tpath, query_generator);
     } else if tpath.path.segments[0].ident == vec_path.segments[0].ident {  // Vec
         query_generator = parse_vector(&field_ident, tpath, query_generator);
     } else {  // Others
@@ -208,15 +222,40 @@ fn parse_tuple(field_ident: &Ident, size: usize, mut query_generator: TokenStrea
 }
 
 
-fn parse_option(field_ident: &Ident, mut query_generator: TokenStream2) -> TokenStream2 {
-    query_generator = quote! {
-        #query_generator
-        // query: String
-        if let Some(val) = self.#field_ident {
-            query += &format!("{}={}&", stringify!(#field_ident), val);
-        }
-    };
-    query_generator
+fn parse_option(field_ident: &Ident, tpath: TypePath, mut query_generator: TokenStream2) -> TokenStream2 {
+    match get_type_argument(&tpath).unwrap() {
+        Type::Array(tarray) => todo!(),
+        Type::Path(tpath) => {
+            if is_option(&tpath) {
+                unsupported_field_type_error(field_ident, query_generator)
+            } else if is_vec(&tpath) {
+                // TODO: Add type check
+                quote! {
+                    #query_generator
+                    // query: String
+                    if let Some(val) = self.#field_ident {
+                        let mut val: String = self.#field_ident.iter()
+                            .fold(String::new(), |acc, v| format!("{}{},", acc, v));
+                        val.pop();
+                        query += &format!("{}={}&", stringify!(#field_ident), val);
+                    }
+                }
+            } else {
+                quote! {
+                    #query_generator
+                    // query: String
+                    if let Some(val) = self.#field_ident {
+                        query += &format!("{}={}&", stringify!(#field_ident), val);
+                    }
+                }
+            }
+        },
+        Type::Ptr(tptr) => todo!(),
+        Type::Reference(tref) => todo!(),
+        Type::Slice(tslice) => todo!(),
+        Type::Tuple(ttuple) => todo!(),
+        _ => unsupported_field_type_error(field_ident, query_generator),
+    }
 }
 
 
