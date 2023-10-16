@@ -33,10 +33,6 @@ struct OptionTypes<'a> {
     opt_string: Option<String>,
     opt_str: Option<&'a str>,
     opt_char: Option<char>,
-    opt_array_u8: Option<[u8; 3]>,
-    opt_tuple: Option<(u8, bool, String, &'a str, char)>,
-    opt_slice: Option<&'a [u8]>,
-    opt_vec_u8: Option<Vec<u8>>,
 }
 
 
@@ -131,14 +127,10 @@ fn option_types() {
         opt_string: None,
         opt_str: Some("str"),
         opt_char: None,
-        opt_array_u8: Some([1, 2, 3]),
-        opt_tuple: None,
-        opt_vec_u8: Some(vec![1, 2, 3]),
-        opt_slice: None,
     };
     assert_eq!(
         param1.to_query_params(),
-        "?opt_u8=1&opt_bool=true&opt_str=str&opt_array_u8=1,2,3&opt_vec_u8=1,2,3".to_string(),
+        "?opt_u8=1&opt_bool=true&opt_str=str&opt_array_u8=1,2,3".to_string(),
     );
 
     let param2: OptionTypes = OptionTypes {
@@ -148,14 +140,10 @@ fn option_types() {
         opt_string: Some("String".to_string()),
         opt_str: None,
         opt_char: Some('c'),
-        opt_array_u8: None,
-        opt_tuple: Some((1, true, "String".to_string(), "str", 'c')),
-        opt_vec_u8: None,
-        opt_slice: Some(&[1, 2, 3]),
     };
     assert_eq!(
         param2.to_query_params(),
-        "?opt_f32=1.0&opt_string=String&opt_char=c&opt_tuple=1,true,String,str,c&opt_slice=1,2,3".to_string(),
+        "?opt_f32=1.0&opt_string=String&opt_char=c".to_string(),
     );
 
     let param3: OptionTypes = OptionTypes {
@@ -165,10 +153,6 @@ fn option_types() {
         opt_string: None,
         opt_str: None,
         opt_char: None,
-        opt_array_u8: None,
-        opt_tuple: None,
-        opt_vec_u8: None,
-        opt_slice: None,
     };
     assert_eq!(param3.to_query_params(), "".to_string());
 }

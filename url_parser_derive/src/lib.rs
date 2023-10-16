@@ -128,7 +128,13 @@ fn parse_type_ptr(field_ident: &Ident, tptr: TypePtr, query_generator: TokenStre
         Type::Array(tarray) => parse_type_array(field_ident, tarray, query_generator),
         Type::Path(tpath) => parse_type_path(field_ident, tpath, query_generator),
         Type::Ptr(tptr) => parse_type_ptr(field_ident, tptr, query_generator),
-        Type::Reference(tref) => parse_type_reference(field_ident, tref, query_generator),
+        Type::Reference(tref) => {
+            quote! {
+                #query_generator
+                // query: String
+                query += &format!("{}={}&", stringify!(#field_ident), *self.#field_ident);
+            }
+        },
         Type::Slice(tslice) => parse_type_slice(field_ident, tslice, query_generator),
         Type::Tuple(ttuple) => parse_type_tuple(field_ident, ttuple, query_generator),
         _ => unsupported_field_type_error(field_ident, query_generator),
@@ -216,22 +222,9 @@ fn parse_slice(field_ident: &Ident, tpath: TypePath, query_generator: TokenStrea
 
 fn parse_option(field_ident: &Ident, tpath: TypePath, query_generator: TokenStream2) -> TokenStream2 {
     match get_type_argument(&tpath).unwrap() {
-        Type::Array(tarray) => todo!(),
         Type::Path(tpath) => {
-            if is_option(&tpath) {
+            if is_option(&tpath) || is_vec(&tpath) {
                 unsupported_field_type_error(field_ident, query_generator)
-            } else if is_vec(&tpath) {
-                // TODO: Add type check
-                quote! {
-                    #query_generator
-                    // query: String
-                    if let Some(val) = self.#field_ident {
-                        let mut val: String = self.#field_ident.iter()
-                            .fold(String::new(), |acc, v| format!("{}{},", acc, v));
-                        val.pop();
-                        query += &format!("{}={}&", stringify!(#field_ident), val);
-                    }
-                }
             } else {
                 quote! {
                     #query_generator
@@ -244,8 +237,6 @@ fn parse_option(field_ident: &Ident, tpath: TypePath, query_generator: TokenStre
         },
         Type::Ptr(tptr) => todo!(),
         Type::Reference(tref) => todo!(),
-        Type::Slice(tslice) => todo!(),
-        Type::Tuple(ttuple) => todo!(),
         _ => unsupported_field_type_error(field_ident, query_generator),
     }
 }
