@@ -125,18 +125,10 @@ fn parse_type_path(field_ident: &Ident, tpath: TypePath, query_generator: TokenS
 
 fn parse_type_ptr(field_ident: &Ident, tptr: TypePtr, query_generator: TokenStream2) -> TokenStream2 {
     match *tptr.elem {
-        Type::Array(tarray) => parse_type_array(field_ident, tarray, query_generator),
-        Type::Path(tpath) => parse_type_path(field_ident, tpath, query_generator),
-        Type::Ptr(tptr) => parse_type_ptr(field_ident, tptr, query_generator),
-        Type::Reference(tref) => {
-            quote! {
-                #query_generator
-                // query: String
-                query += &format!("{}={}&", stringify!(#field_ident), *self.#field_ident);
-            }
-        },
-        Type::Slice(tslice) => parse_type_slice(field_ident, tslice, query_generator),
-        Type::Tuple(ttuple) => parse_type_tuple(field_ident, ttuple, query_generator),
+        Type::Array(tarray) => todo!(),
+        Type::Path(tpath) => todo!(),
+        Type::Slice(tslice) => todo!(),
+        Type::Tuple(ttuple) => todo!(),
         _ => unsupported_field_type_error(field_ident, query_generator),
     }
 }
@@ -146,8 +138,6 @@ fn parse_type_reference(field_ident: &Ident, tref: TypeReference, query_generato
     match *tref.elem {
         Type::Array(tarray) => parse_type_array(field_ident, tarray, query_generator),
         Type::Path(tpath) => parse_type_path(field_ident, tpath, query_generator),
-        Type::Ptr(tptr) => parse_type_ptr(field_ident, tptr, query_generator),
-        Type::Reference(tref) => parse_type_reference(field_ident, tref, query_generator),
         Type::Slice(tslice) => parse_type_slice(field_ident, tslice, query_generator),
         Type::Tuple(ttuple) => parse_type_tuple(field_ident, ttuple, query_generator),
         _ => unsupported_field_type_error(field_ident, query_generator),
