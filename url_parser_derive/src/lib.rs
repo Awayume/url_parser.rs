@@ -125,11 +125,161 @@ fn parse_type_path(field_ident: &Ident, tpath: TypePath, query_generator: TokenS
 
 fn parse_type_ptr(field_ident: &Ident, tptr: TypePtr, query_generator: TokenStream2) -> TokenStream2 {
     match *tptr.elem {
-        Type::Array(tarray) => todo!(),
-        Type::Path(tpath) => todo!(),
-        Type::Slice(tslice) => todo!(),
-        Type::Tuple(ttuple) => todo!(),
+        Type::Array(tarray) => {
+            match *tarray.elem {
+                Type::Path(tpath) => parse_ptr_slice(field_ident, tpath, query_generator),
+                Type::Ptr(tptr) => {
+                    if let Ok(tpath) = unwrap_boxed_type_path(tptr.elem) {
+                        parse_ptr_slice_ptr(field_ident, tpath, query_generator)
+                    } else {
+                        unsupported_field_type_error(field_ident, query_generator)
+                    }
+                },
+                Type::Reference(tref) => {
+                    if let Ok(tpath) = unwrap_boxed_type_path(tref.elem) {
+                        parse_ptr_slice(field_ident, tpath, query_generator)
+                    } else {
+                        unsupported_field_type_error(field_ident, query_generator)
+                    }
+                },
+                _ => unsupported_field_type_error(field_ident, query_generator),
+            }
+        },
+        Type::Path(tpath) => {
+            if is_option(&tpath) {
+                match get_type_argument(&tpath).unwrap() {
+                    Type::Path(tpath) => {
+                        if is_option(&tpath) || is_vec(&tpath) {
+                            unsupported_field_type_error(field_ident, query_generator)
+                        } else {
+                            quote! {
+                                #query_generator
+                                // query: String
+                                if let Some(val) = self.#field_ident {
+                                    query += &format!("{}={}&", stringify!(#field_ident), val);
+                                }
+                            }
+                        }
+                    },
+                    Type::Ptr(tptr) => todo!(),
+                    Type::Reference(tref) => todo!(),
+                    _ => unsupported_field_type_error(field_ident, query_generator),
+                }
+            } else if is_vec(&tpath) {
+                match get_type_argument(&tpath).unwrap() {
+                    Type::Path(tpath) => parse_ptr_slice(field_ident, tpath.clone(), query_generator),
+                    Type::Ptr(tptr) => {
+                        if let Ok(tpath) = unwrap_boxed_type_path(tptr.elem.clone()) {
+                            parse_ptr_slice_ptr(&field_ident, tpath, query_generator)
+                        } else {
+                            unsupported_field_type_error(&field_ident, query_generator)
+                        }
+                    },
+                    Type::Reference(tref) => {
+                        if let Ok(tpath) = unwrap_boxed_type_path(tref.elem.clone()) {
+                            parse_ptr_slice(&field_ident, tpath, query_generator)
+                        } else {
+                            unsupported_field_type_error(&field_ident, query_generator)
+                        }
+                    },
+                    _ => unsupported_field_type_error(field_ident, query_generator),
+                }
+            } else {
+                quote! {
+                    #query_generator
+                    // query: String
+                    if !self.#field_ident.is_null() {
+                        query += &format!("{}={}&", stringify!(#field_ident), *self.#field_ident);
+                    }
+                }
+            }
+        },
+        Type::Slice(tslice) => {
+            if let Ok(tpath) = unwrap_boxed_type_path(tslice.elem) {
+                parse_ptr_slice(field_ident, tpath, query_generator)
+            } else {
+                unsupported_field_type_error(field_ident, query_generator)
+            }
+        },
+        Type::Tuple(ttuple) => {
+            if ttuple.elems.iter().all(|ty: &Type| -> bool {
+                match ty {
+                    Type::Path(tpath) => !(is_option(&tpath) || is_vec(&tpath)),
+                    Type::Ptr(tptr) => {
+                        if let Ok(tpath) = unwrap_boxed_type_path(tptr.elem.clone()) {
+                            !(is_option(&tpath) || is_vec(&tpath))
+                        } else {
+                            false
+                        }
+                    },
+                    Type::Reference(tref) => {
+                        if let Ok(tpath) = unwrap_boxed_type_path(tref.elem.clone()) {
+                            !(is_option(&tpath) || is_vec(&tpath))
+                        } else {
+                            false
+                        }
+                    },
+                    _ => false,
+                }
+            }) {
+                let size: usize = ttuple.elems.len();
+                let mut template: String = "{},".to_string().repeat(size);
+                template.pop();
+                let mut values: TokenStream2 = TokenStream2::new();
+                for i in 0..size {
+                    let i: TokenStream2 = TokenStream2::from_str(&i.to_string()).unwrap();
+                    values = quote!(#values (*self.#field_ident).#i,);
+                }
+                quote! {
+                    #query_generator
+                    // query: String
+                    if !self.#field_ident.is_null() {
+                        query += &format!(#template, #values);
+                    }
+                }
+            } else {
+                unsupported_field_type_error(field_ident, query_generator)
+            }
+        },
         _ => unsupported_field_type_error(field_ident, query_generator),
+    }
+}
+
+
+fn parse_ptr_slice(field_ident: &Ident, tpath: TypePath, query_generator: TokenStream2) -> TokenStream2 {
+    if is_option(&tpath) || is_vec(&tpath) {
+        unsupported_field_type_error(field_ident, query_generator)
+    } else {
+        quote! {
+            #query_generator
+            // query: String
+            if !self.#field_ident.is_null() {
+                let mut val: String = *self.#field_ident.iter()
+                    .fold(String::new(), |acc, v| format!("{}{},", acc, v));
+                val.pop();
+                query += &format!("{}={}&", stringify!(#field_ident), val);
+            }
+        }
+    }
+}
+
+
+fn parse_ptr_slice_ptr(field_ident: &Ident, tpath: TypePath, query_generator: TokenStream2) -> TokenStream2 {
+    if is_option(&tpath) || is_vec(&tpath) {
+        unsupported_field_type_error(field_ident, query_generator)
+    } else {
+        quote! {
+            #query_generator
+            // query: String
+            if !self.#field_ident.is_null() {
+                let mut val: String = Default::default();
+                for v in *self.#field_ident {
+                    val += &format!("{}{},", val, v);
+                }
+                val.pop();
+                query += &format!("{}={}&", stringify!(#field_ident), val);
+            }
+        }
     }
 }
 
