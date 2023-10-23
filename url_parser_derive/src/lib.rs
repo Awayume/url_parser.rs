@@ -50,16 +50,6 @@ pub fn derive_query_params(input: TokenStream) -> TokenStream {
 }
 
 
-fn unwrap_boxed_type_path(tbox: Box<Type>) -> Result<TypePath, ()> {
-    match *tbox {
-        Type::Path(tpath) => Ok(tpath),
-        Type::Ptr(tptr) => unwrap_boxed_type_path(tptr.elem),
-        Type::Reference(tref) => unwrap_boxed_type_path(tref.elem),
-        _ => Err(()),
-    }
-}
-
-
 #[inline]
 fn get_type_argument(tpath: &TypePath) -> Result<Type, ()> {
     if let PathArguments::AngleBracketed(garg) = &tpath.path.segments[0].arguments {
@@ -92,14 +82,14 @@ fn parse_type_array(field_ident: &Ident, tarray: TypeArray, query_generator: Tok
     match *tarray.elem {
         Type::Path(tpath) => parse_slice(field_ident, tpath, query_generator),
         Type::Ptr(tptr) => {
-            if let Ok(tpath) = unwrap_boxed_type_path(tptr.elem) {
+            if let Type::Path(tpath) = *tptr.elem {
                 parse_slice(field_ident, tpath, query_generator)
             } else {
                 unsupported_field_type_error(field_ident, query_generator)
             }
         },
         Type::Reference(tref) => {
-            if let Ok(tpath) = unwrap_boxed_type_path(tref.elem) {
+            if let Type::Path(tpath) = *tref.elem {
                 parse_slice(field_ident, tpath, query_generator)
             } else {
                 unsupported_field_type_error(field_ident, query_generator)
@@ -129,14 +119,14 @@ fn parse_type_ptr(field_ident: &Ident, tptr: TypePtr, query_generator: TokenStre
             match *tarray.elem {
                 Type::Path(tpath) => parse_ptr_slice(field_ident, tpath, query_generator),
                 Type::Ptr(tptr) => {
-                    if let Ok(tpath) = unwrap_boxed_type_path(tptr.elem) {
+                    if let Type::Path(tpath) = *tptr.elem {
                         parse_ptr_slice_ptr(field_ident, tpath, query_generator)
                     } else {
                         unsupported_field_type_error(field_ident, query_generator)
                     }
                 },
                 Type::Reference(tref) => {
-                    if let Ok(tpath) = unwrap_boxed_type_path(tref.elem) {
+                    if let Type::Path(tpath) = *tref.elem {
                         parse_ptr_slice(field_ident, tpath, query_generator)
                     } else {
                         unsupported_field_type_error(field_ident, query_generator)
@@ -201,14 +191,14 @@ fn parse_type_ptr(field_ident: &Ident, tptr: TypePtr, query_generator: TokenStre
                 match get_type_argument(&tpath).unwrap() {
                     Type::Path(tpath) => parse_ptr_slice(field_ident, tpath.clone(), query_generator),
                     Type::Ptr(tptr) => {
-                        if let Ok(tpath) = unwrap_boxed_type_path(tptr.elem.clone()) {
+                        if let Type::Path(tpath) = *tptr.elem {
                             parse_ptr_slice_ptr(&field_ident, tpath, query_generator)
                         } else {
                             unsupported_field_type_error(&field_ident, query_generator)
                         }
                     },
                     Type::Reference(tref) => {
-                        if let Ok(tpath) = unwrap_boxed_type_path(tref.elem.clone()) {
+                        if let Type::Path(tpath) = *tref.elem {
                             parse_ptr_slice(&field_ident, tpath, query_generator)
                         } else {
                             unsupported_field_type_error(&field_ident, query_generator)
@@ -227,7 +217,7 @@ fn parse_type_ptr(field_ident: &Ident, tptr: TypePtr, query_generator: TokenStre
             }
         },
         Type::Slice(tslice) => {
-            if let Ok(tpath) = unwrap_boxed_type_path(tslice.elem) {
+            if let Type::Path(tpath) = *tslice.elem {
                 parse_ptr_slice(field_ident, tpath, query_generator)
             } else {
                 unsupported_field_type_error(field_ident, query_generator)
@@ -238,14 +228,14 @@ fn parse_type_ptr(field_ident: &Ident, tptr: TypePtr, query_generator: TokenStre
                 match ty {
                     Type::Path(tpath) => !(is_option(&tpath) || is_vec(&tpath)),
                     Type::Ptr(tptr) => {
-                        if let Ok(tpath) = unwrap_boxed_type_path(tptr.elem.clone()) {
+                        if let Type::Path(tpath) = *tptr.elem.clone() {
                             !(is_option(&tpath) || is_vec(&tpath))
                         } else {
                             false
                         }
                     },
                     Type::Reference(tref) => {
-                        if let Ok(tpath) = unwrap_boxed_type_path(tref.elem.clone()) {
+                        if let Type::Path(tpath) = *tref.elem.clone() {
                             !(is_option(&tpath) || is_vec(&tpath))
                         } else {
                             false
@@ -328,7 +318,7 @@ fn parse_type_reference(field_ident: &Ident, tref: TypeReference, query_generato
 
 
 fn parse_type_slice(field_ident: &Ident, tslice: TypeSlice, query_generator: TokenStream2) -> TokenStream2 {
-    if let Ok(tpath) = unwrap_boxed_type_path(tslice.elem) {
+    if let Type::Path(tpath) = *tslice.elem {
         parse_slice(field_ident, tpath, query_generator)
     } else {
         unsupported_field_type_error(field_ident, query_generator)
@@ -341,14 +331,14 @@ fn parse_type_tuple(field_ident: &Ident, ttuple: TypeTuple, query_generator: Tok
         match ty {
             Type::Path(tpath) => !(is_option(&tpath) || is_vec(&tpath)),
             Type::Ptr(tptr) => {
-                if let Ok(tpath) = unwrap_boxed_type_path(tptr.elem.clone()) {
+                if let Type::Path(tpath) = *tptr.elem.clone() {
                     !(is_option(&tpath) || is_vec(&tpath))
                 } else {
                     false
                 }
             },
             Type::Reference(tref) => {
-                if let Ok(tpath) = unwrap_boxed_type_path(tref.elem.clone()) {
+                if let Type::Path(tpath) = *tref.elem.clone() {
                     !(is_option(&tpath) || is_vec(&tpath))
                 } else {
                     false
@@ -452,14 +442,14 @@ fn parse_vector(field_ident: &Ident, tpath: TypePath, query_generator: TokenStre
             match ty {
                 Type::Path(tpath) => parse_slice(field_ident, tpath.clone(), query_generator),
                 Type::Ptr(tptr) => {
-                    if let Ok(tpath) = unwrap_boxed_type_path(tptr.elem.clone()) {
+                    if let Type::Path(tpath) = *tptr.elem.clone() {
                         parse_slice(&field_ident, tpath, query_generator)
                     } else {
                         unsupported_field_type_error(&field_ident, query_generator)
                     }
                 },
                 Type::Reference(tref) => {
-                    if let Ok(tpath) = unwrap_boxed_type_path(tref.elem.clone()) {
+                    if let Type::Path(tpath) = *tref.elem.clone() {
                         parse_slice(&field_ident, tpath, query_generator)
                     } else {
                         unsupported_field_type_error(&field_ident, query_generator)
