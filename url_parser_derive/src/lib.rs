@@ -161,8 +161,40 @@ fn parse_type_ptr(field_ident: &Ident, tptr: TypePtr, query_generator: TokenStre
                             }
                         }
                     },
-                    Type::Ptr(tptr) => todo!(),
-                    Type::Reference(tref) => todo!(),
+        Type::Ptr(tptr) => {
+            if let Type::Path(tpath) = *tptr.elem {
+                if is_option(&tpath) || is_vec(&tpath) {
+                    unsupported_field_type_error(field_ident, query_generator)
+                } else {
+                    quote! {
+                        #query_generator
+                        // query: String
+                        if let Some(val) = self.#field_ident {
+                            query += &format!("{}={}&", stringify!(#field_ident), *val);
+                        }
+                    }
+                }
+            } else {
+                unsupported_field_type_error(field_ident, query_generator)
+            }
+        },
+        Type::Reference(tref) => {
+            if let Type::Path(tpath) = *tref.elem {
+                if is_option(&tpath) || is_vec(&tpath) {
+                    unsupported_field_type_error(field_ident, query_generator)
+                } else {
+                    quote! {
+                        #query_generator
+                        // query: String
+                        if let Some(val) = self.#field_ident {
+                            query += &format!("{}={}&", stringify!(#field_ident), val);
+                        }
+                    }
+                }
+            } else {
+                unsupported_field_type_error(field_ident, query_generator)
+            }
+        },
                     _ => unsupported_field_type_error(field_ident, query_generator),
                 }
             } else if is_vec(&tpath) {
@@ -375,8 +407,40 @@ fn parse_option(field_ident: &Ident, tpath: TypePath, query_generator: TokenStre
                 }
             }
         },
-        Type::Ptr(tptr) => todo!(),
-        Type::Reference(tref) => todo!(),
+        Type::Ptr(tptr) => {
+            if let Type::Path(tpath) = *tptr.elem {
+                if is_option(&tpath) || is_vec(&tpath) {
+                    unsupported_field_type_error(field_ident, query_generator)
+                } else {
+                    quote! {
+                        #query_generator
+                        // query: String
+                        if let Some(val) = self.#field_ident {
+                            query += &format!("{}={}&", stringify!(#field_ident), *val);
+                        }
+                    }
+                }
+            } else {
+                unsupported_field_type_error(field_ident, query_generator)
+            }
+        },
+        Type::Reference(tref) => {
+            if let Type::Path(tpath) = *tref.elem {
+                if is_option(&tpath) || is_vec(&tpath) {
+                    unsupported_field_type_error(field_ident, query_generator)
+                } else {
+                    quote! {
+                        #query_generator
+                        // query: String
+                        if let Some(val) = self.#field_ident {
+                            query += &format!("{}={}&", stringify!(#field_ident), val);
+                        }
+                    }
+                }
+            } else {
+                unsupported_field_type_error(field_ident, query_generator)
+            }
+        },
         _ => unsupported_field_type_error(field_ident, query_generator),
     }
 }
