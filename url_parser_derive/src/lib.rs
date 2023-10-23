@@ -437,31 +437,23 @@ fn parse_option(field_ident: &Ident, tpath: TypePath, query_generator: TokenStre
 
 
 fn parse_vector(field_ident: &Ident, tpath: TypePath, query_generator: TokenStream2) -> TokenStream2 {
-    if let PathArguments::AngleBracketed(garg) = &tpath.path.segments[0].arguments {
-        if let GenericArgument::Type(ty) = &garg.args[0] {
-            match ty {
-                Type::Path(tpath) => parse_slice(field_ident, tpath.clone(), query_generator),
-                Type::Ptr(tptr) => {
-                    if let Type::Path(tpath) = *tptr.elem.clone() {
-                        parse_slice(&field_ident, tpath, query_generator)
-                    } else {
-                        unsupported_field_type_error(&field_ident, query_generator)
-                    }
-                },
-                Type::Reference(tref) => {
-                    if let Type::Path(tpath) = *tref.elem.clone() {
-                        parse_slice(&field_ident, tpath, query_generator)
-                    } else {
-                        unsupported_field_type_error(&field_ident, query_generator)
-                    }
-                },
-                _ => unsupported_field_type_error(field_ident, query_generator),
+    match get_type_argument(&tpath).unwrap() {
+        Type::Path(tpath) => parse_slice(field_ident, tpath.clone(), query_generator),
+        Type::Ptr(tptr) => {
+            if let Type::Path(tpath) = *tptr.elem.clone() {
+                parse_slice(&field_ident, tpath, query_generator)
+            } else {
+                unsupported_field_type_error(&field_ident, query_generator)
             }
-        } else {
-            unsupported_field_type_error(field_ident, query_generator)
-        }
-    } else {
-        unsupported_field_type_error(field_ident, query_generator)
+        },
+        Type::Reference(tref) => {
+            if let Type::Path(tpath) = *tref.elem.clone() {
+                parse_slice(&field_ident, tpath, query_generator)
+            } else {
+                unsupported_field_type_error(&field_ident, query_generator)
+            }
+        },
+        _ => unsupported_field_type_error(field_ident, query_generator),
     }
 }
 
