@@ -83,7 +83,7 @@ fn parse_type_array(field_ident: &Ident, tarray: TypeArray, query_generator: Tok
         Type::Path(tpath) => parse_slice(field_ident, tpath, query_generator),
         Type::Ptr(tptr) => {
             if let Type::Path(tpath) = *tptr.elem {
-                parse_slice(field_ident, tpath, query_generator)
+                parse_slice_ptr(field_ident, tpath, query_generator)
             } else {
                 unsupported_field_type_error(field_ident, query_generator)
             }
@@ -276,11 +276,31 @@ fn parse_ptr_slice(field_ident: &Ident, tpath: TypePath, query_generator: TokenS
             #query_generator
             // query: String
             if !self.#field_ident.is_null() {
-                let mut val: String = *self.#field_ident.iter()
+                let mut val: String = (*self.#field_ident).iter()
                     .fold(String::new(), |acc, v| format!("{}{},", acc, v));
                 val.pop();
                 query += &format!("{}={}&", stringify!(#field_ident), val);
             }
+        }
+    }
+}
+
+
+fn parse_slice_ptr(field_ident: &Ident, tpath: TypePath, query_generator: TokenStream2) -> TokenStream2 {
+    if is_option(&tpath) || is_vec(&tpath) {
+        unsupported_field_type_error(field_ident, query_generator)
+    } else {
+        quote! {
+            #query_generator
+            // query: String
+            let mut val: String = Default::default();
+            for v in self.#field_ident {
+                if !v.is_null() {
+                    val += &format!("{}{},", val, *v);
+                }
+            }
+            val.pop();
+            query += &format!("{}={}&", stringify!(#field_ident), val);
         }
     }
 }
@@ -347,13 +367,16 @@ fn parse_type_tuple(field_ident: &Ident, ttuple: TypeTuple, query_generator: Tok
             _ => false,
         }
     }) {
-        let size: usize = ttuple.elems.len();
-        let mut template: String = "{},".to_string().repeat(size);
+        let mut template: String = "{},".to_string().repeat(ttuple.elems.len());
         template.pop();
         let mut values: TokenStream2 = TokenStream2::new();
-        for i in 0..size {
-            let i: TokenStream2 = TokenStream2::from_str(&i.to_string()).unwrap();
-            values = quote!(#values self.#field_ident.#i,);
+        for (i, val) in ttuple.elems.iter().enumerate() {
+            let idx: TokenStream2 = TokenStream2::from_str(&i.to_string()).unwrap();
+            if let Type::Ptr(_) = val {
+                values = quote!(#values *self.#field_ident.#idx,);
+            } else {
+                values = quote!(#values self.#field_ident.#idx,);
+            }
         }
         quote! {
             #query_generator
@@ -441,7 +464,7 @@ fn parse_vector(field_ident: &Ident, tpath: TypePath, query_generator: TokenStre
         Type::Path(tpath) => parse_slice(field_ident, tpath.clone(), query_generator),
         Type::Ptr(tptr) => {
             if let Type::Path(tpath) = *tptr.elem.clone() {
-                parse_slice(&field_ident, tpath, query_generator)
+                parse_slice_ptr(&field_ident, tpath, query_generator)
             } else {
                 unsupported_field_type_error(&field_ident, query_generator)
             }
