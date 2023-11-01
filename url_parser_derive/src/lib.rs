@@ -160,7 +160,7 @@ fn parse_type_ptr(field_ident: &Ident, tptr: TypePtr, query_generator: TokenStre
                             quote! {
                                 #query_generator
                                 // query: String
-                                if let Some(val) = self.#field_ident {
+                                if let Some(val) = *self.#field_ident {
                                     query += &format!("{}={}&", stringify!(#field_ident), val);
                                 }
                             }
