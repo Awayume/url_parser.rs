@@ -3,6 +3,7 @@
 
 use std::fmt::{Display, Formatter, Result as FormatterResult};
 use std::ptr;
+
 use url_parser_derive::QueryParams;
 use url_parser_trait::QueryParams;
 
@@ -73,7 +74,9 @@ struct CustomType {
 
 impl CustomType {
     fn new(value: &str) -> Self {
-        Self {value: value.to_string()}
+        Self {
+            value: value.to_string(),
+        }
     }
 }
 
@@ -113,7 +116,8 @@ fn basic_types() {
         concat!(
             "?u8=1&f32=1.0&bool=true&string=String&str=str&char=c&array_u8=1,2,3&array_bool=true,false,true",
             "&array_string=A,B,C&array_str=a,b,c&array_char=a,b,c&tuple=1,true,String, str,c&slice=1,2,3",
-        ).to_string(),
+        )
+        .to_string(),
     );
 }
 
@@ -173,7 +177,8 @@ fn vector_types() {
         concat!(
             "?vec_u8=1,2,3&vec_f32=1.0,2.0,3.0&vec_bool=true,false",
             "&vec_string=St,ri,ng&vec_str=st,r&vec_char=c,h,a,r",
-        ).to_string(),
+        )
+        .to_string(),
     );
 }
 
