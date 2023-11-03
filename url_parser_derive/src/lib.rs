@@ -37,7 +37,6 @@ pub fn derive_query_params(input: TokenStream) -> TokenStream {
                 Type::Path(tpath) => query_generator = parse_type_path(&field_ident, tpath, query_generator),
                 Type::Ptr(tptr) => query_generator = parse_type_ptr(&field_ident, tptr, query_generator),
                 Type::Reference(tref) => query_generator = parse_type_reference(&field_ident, tref, query_generator),
-                Type::Slice(tslice) => query_generator = parse_type_slice(&field_ident, tslice, query_generator),
                 Type::Tuple(ttuple) => query_generator = parse_type_tuple(&field_ident, ttuple, query_generator),
                 _ => query_generator = unsupported_field_type_error(&field_ident, query_generator),
             }
@@ -231,9 +230,13 @@ fn parse_type_ptr(field_ident: &Ident, tptr: TypePtr, query_generator: TokenStre
                 }
             }
         }
-        Type::Slice(tslice) => {
-            if let Type::Path(tpath) = *tslice.elem {
-                parse_ptr_slice(field_ident, tpath, query_generator)
+        Type::Reference(tref) => {
+            if let Type::Slice(tslice) = *tref.elem {
+                if let Type::Path(tpath) = *tslice.elem {
+                    parse_ptr_slice(field_ident, tpath, query_generator)
+                } else {
+                    unsupported_field_type_error(field_ident, query_generator)
+                }
             } else {
                 unsupported_field_type_error(field_ident, query_generator)
             }
