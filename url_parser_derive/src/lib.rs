@@ -314,7 +314,7 @@ fn parse_slice_ptr(field_ident: &Ident, tpath: TypePath, query_generator: TokenS
             let mut val: String = Default::default();
             for v in self.#field_ident {
                 if !v.is_null() {
-                    val += &format!("{}{},", val, *v);
+                    val += &format!("{}{},", val, v.as_ref().unwrap());
                 }
             }
             val.pop();
@@ -356,10 +356,25 @@ fn parse_type_reference(field_ident: &Ident, tref: TypeReference, query_generato
 
 
 fn parse_type_slice(field_ident: &Ident, tslice: TypeSlice, query_generator: TokenStream2) -> TokenStream2 {
-    if let Type::Path(tpath) = *tslice.elem {
-        parse_slice(field_ident, tpath, query_generator)
-    } else {
-        unsupported_field_type_error(field_ident, query_generator)
+    match *tslice.elem {
+        Type::Path(tpath) => {
+            parse_slice(field_ident, tpath, query_generator)
+        }
+        Type::Ptr(tptr) => {
+            if let Type::Path(tpath) = *tptr.elem {
+                parse_slice_ptr(field_ident, tpath, query_generator)
+            } else {
+                unsupported_field_type_error(field_ident, query_generator)
+            }
+        }
+        Type::Reference(tref) => {
+            if let Type::Path(tpath) = *tref.elem {
+                parse_slice(field_ident, tpath, query_generator)
+            } else {
+                unsupported_field_type_error(field_ident, query_generator)
+            }
+        }
+        _ => unsupported_field_type_error(field_ident, query_generator),
     }
 }
 
