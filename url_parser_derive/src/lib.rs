@@ -334,7 +334,7 @@ fn parse_ptr_slice_ptr(field_ident: &Ident, tpath: TypePath, query_generator: To
             if !self.#field_ident.is_null() {
                 let mut val: String = Default::default();
                 for v in *self.#field_ident {
-                    val += &format!("{}{},", val, v);
+                    val += &format!("{}{},", val, v.as_ref().unwrap());
                 }
                 val.pop();
                 query += &format!("{}={}&", stringify!(#field_ident), val);
@@ -462,7 +462,7 @@ fn parse_option(field_ident: &Ident, tpath: TypePath, query_generator: TokenStre
                         #query_generator
                         // query: String
                         if let Some(val) = &self.#field_ident {
-                            query += &format!("{}={}&", stringify!(#field_ident), *val);
+                            query += &format!("{}={}&", stringify!(#field_ident), val.as_ref().unwrap());
                         }
                     }
                 }
