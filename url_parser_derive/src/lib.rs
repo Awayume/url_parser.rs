@@ -312,7 +312,7 @@ fn parse_slice_ptr(field_ident: &Ident, tpath: TypePath, query_generator: TokenS
             #query_generator
             // query: String
             let mut val: String = Default::default();
-            for v in self.#field_ident {
+            for v in self.#field_ident.clone() {
                 if !v.is_null() {
                     val += &format!("{}{},", val, v.as_ref().unwrap());
                 }
