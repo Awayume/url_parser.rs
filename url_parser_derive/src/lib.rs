@@ -394,7 +394,7 @@ fn parse_type_slice(field_ident: &Ident, tslice: TypeSlice, query_generator: Tok
 }
 
 
-fn parse_type_tuple(field_ident: &Ident, ttuple: TypeTuple, query_generator: TokenStream2) -> TokenStream2 {
+fn parse_type_tuple(field_ident: &Ident, ttuple: TypeTuple, mut query_generator: TokenStream2) -> TokenStream2 {
     if ttuple.elems.iter().all(|ty: &Type| -> bool {
         match ty {
             Type::Path(tpath) => !(is_option(&tpath) || is_vec(&tpath)),
@@ -415,23 +415,36 @@ fn parse_type_tuple(field_ident: &Ident, ttuple: TypeTuple, query_generator: Tok
             _ => false,
         }
     }) {
-        let mut template: String = "{},".to_string().repeat(ttuple.elems.len());
-        template.pop();
-        let mut values: TokenStream2 = TokenStream2::new();
+        query_generator = quote! {
+            #query_generator
+            // query: String
+            query += &format!("{}=", stringify!(#field_ident));
+        };
         for (i, val) in ttuple.elems.iter().enumerate() {
             let idx: TokenStream2 = TokenStream2::from_str(&i.to_string()).unwrap();
             if let Type::Ptr(_) = val {
-                values = quote!(#values *self.#field_ident.#idx,);
+                query_generator = quote! {
+                    #query_generator
+                    if !self.#field_ident.#idx.is_null() {
+                        unsafe {
+                            // query: String
+                            query += &format!("{},", *self.#field_ident.#idx);
+                        }
+                    }
+                };
             } else {
-                values = quote!(#values self.#field_ident.#idx,);
+                query_generator = quote! {
+                    #query_generator
+                    // query: String
+                    query += &format!("{},", self.#field_ident.#idx);
+                };
             }
         }
         quote! {
             #query_generator
             // query: String
-            unsafe {
-                query += &format!(#template, #values);
-            }
+            query.pop();
+            query += "&";
         }
     } else {
         unsupported_field_type_error(field_ident, query_generator)
