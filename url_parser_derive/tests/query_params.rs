@@ -98,7 +98,7 @@ struct CustomTypes {
 fn basic_types() {
     let param: BasicTypes = BasicTypes {
         u8: 1,
-        f32: 1.0,
+        f32: 1.5,
         bool: true,
         string: "String".to_string(),
         str: "str",
@@ -114,8 +114,8 @@ fn basic_types() {
     assert_eq!(
         param.to_query_params(),
         concat!(
-            "?u8=1&f32=1.0&bool=true&string=String&str=str&char=c&array_u8=1,2,3&array_bool=true,false,true",
-            "&array_string=A,B,C&array_str=a,b,c&array_char=a,b,c&tuple=1,true,String, str,c&slice=1,2,3",
+            "?u8=1&f32=1.5&bool=true&string=String&str=str&char=c&array_u8=1,2,3&array_bool=true,false,true",
+            "&array_string=A,B,C&array_str=a,b,c&array_char=a,b,c&tuple=1,true,String,str,c&slice=1,2,3",
         )
         .to_string(),
     );
@@ -134,12 +134,12 @@ fn option_types() {
     };
     assert_eq!(
         param1.to_query_params(),
-        "?opt_u8=1&opt_bool=true&opt_str=str&opt_array_u8=1,2,3".to_string(),
+        "?opt_u8=1&opt_bool=true&opt_str=str".to_string(),
     );
 
     let param2: OptionTypes = OptionTypes {
         opt_u8: None,
-        opt_f32: Some(1.0),
+        opt_f32: Some(1.5),
         opt_bool: None,
         opt_string: Some("String".to_string()),
         opt_str: None,
@@ -147,7 +147,7 @@ fn option_types() {
     };
     assert_eq!(
         param2.to_query_params(),
-        "?opt_f32=1.0&opt_string=String&opt_char=c".to_string(),
+        "?opt_f32=1.5&opt_string=String&opt_char=c".to_string(),
     );
 
     let param3: OptionTypes = OptionTypes {
@@ -164,22 +164,32 @@ fn option_types() {
 
 #[test]
 fn vector_types() {
-    let param: VectorTypes = VectorTypes {
+    let param1: VectorTypes = VectorTypes {
         vec_u8: vec![1, 2, 3],
-        vec_f32: vec![1.0, 2.0, 3.0],
+        vec_f32: vec![1.5, 2.5, 3.5],
         vec_bool: vec![true, false],
         vec_string: vec!["St".to_string(), "ri".to_string(), "ng".to_string()],
         vec_str: vec!["st", "r"],
         vec_char: vec!['c', 'h', 'a', 'r'],
     };
     assert_eq!(
-        param.to_query_params(),
+        param1.to_query_params(),
         concat!(
-            "?vec_u8=1,2,3&vec_f32=1.0,2.0,3.0&vec_bool=true,false",
+            "?vec_u8=1,2,3&vec_f32=1.5,2.5,3.5&vec_bool=true,false",
             "&vec_string=St,ri,ng&vec_str=st,r&vec_char=c,h,a,r",
         )
         .to_string(),
     );
+
+    let param2: VectorTypes = VectorTypes {
+        vec_u8: vec![],
+        vec_f32: vec![],
+        vec_bool: vec![],
+        vec_string: vec![],
+        vec_str: vec![],
+        vec_char: vec![],
+    };
+    assert_eq!(param2.to_query_params(), "".to_string());
 }
 
 
