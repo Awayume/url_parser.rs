@@ -302,15 +302,13 @@ fn parse_ptr_slice(field_ident: &Ident, tpath: TypePath, query_generator: TokenS
             #query_generator
             // query: String
             if !self.#field_ident.is_null() {
+                let mut val: String;
                 unsafe {
-                    let mut val: String = Default::default();
-                    if (*self.#field_ident).len() != 0 {
-                        val = (*self.#field_ident).iter()
-                            .fold(String::new(), |acc, v| format!("{}{},", acc, v));
-                        val.pop();
-                        query += &format!("{}={}&", stringify!(#field_ident), val);
-                    }
+                    val = (*self.#field_ident).iter()
+                        .fold(String::new(), |acc, v| format!("{}{},", acc, v));
                 }
+                val.pop();
+                query += &format!("{}={}&", stringify!(#field_ident), val);
             }
         }
     }
@@ -324,18 +322,16 @@ fn parse_slice_ptr(field_ident: &Ident, tpath: TypePath, query_generator: TokenS
         quote! {
             #query_generator
             // query: String
-            if self.#field_ident.len() != 0 {
-                let mut val: String = Default::default();
-                for v in self.#field_ident.clone() {
-                    if !v.is_null() {
-                        unsafe {
-                            val += &format!("{}{},", val, v.as_ref().unwrap());
-                        }
+            let mut val: String = Default::default();
+            for v in self.#field_ident.clone() {
+                if !v.is_null() {
+                    unsafe {
+                        val += &format!("{}{},", val, v.as_ref().unwrap());
                     }
                 }
-                val.pop();
-                query += &format!("{}={}&", stringify!(#field_ident), val);
             }
+            val.pop();
+            query += &format!("{}={}&", stringify!(#field_ident), val);
         }
     }
 }
@@ -349,18 +345,14 @@ fn parse_ptr_slice_ptr(field_ident: &Ident, tpath: TypePath, query_generator: To
             #query_generator
             // query: String
             if !self.#field_ident.is_null() {
+                let mut val: String = Default::default();
                 unsafe {
-                    if (*self.#field_ident).len() != 0 {
-                        let mut val: String = Default::default();
-                        for v in *self.#field_ident {
-                            if !v.is_null() {
-                                val += &format!("{}{},", val, v.as_ref().unwrap());
-                            }
-                        }
-                        val.pop();
-                        query += &format!("{}={}&", stringify!(#field_ident), val);
+                    for v in *self.#field_ident {
+                        val += &format!("{}{},", val, v.as_ref().unwrap());
                     }
                 }
+                val.pop();
+                query += &format!("{}={}&", stringify!(#field_ident), val);
             }
         }
     }
@@ -467,12 +459,10 @@ fn parse_slice(field_ident: &Ident, tpath: TypePath, query_generator: TokenStrea
         quote! {
             #query_generator
             // query: String
-            if self.#field_ident.len() != 0 {
-                let mut val: String = self.#field_ident.iter()
-                    .fold(String::new(), |acc, v| format!("{}{},", acc, v));
-                val.pop();
-                query += &format!("{}={}&", stringify!(#field_ident), val);
-            }
+            let mut val: String = self.#field_ident.iter()
+                .fold(String::new(), |acc, v| format!("{}{},", acc, v));
+            val.pop();
+            query += &format!("{}={}&", stringify!(#field_ident), val);
         }
     }
 }
