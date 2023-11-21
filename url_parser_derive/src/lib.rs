@@ -161,7 +161,10 @@ fn parse_type_ptr(field_ident: &Ident, tptr: TypePtr, query_generator: TokenStre
                                 // query: String
                                 unsafe {
                                     if let Some(val) = *self.#field_ident {
-                                        query += &format!("{}={}&", stringify!(#field_ident), val);
+                                        let val: String = val.to_string();
+                                        if !val.is_empty() {
+                                            query += &format!("{}={}&", stringify!(#field_ident), val);
+                                        }
                                     }
                                 }
                             }
@@ -177,7 +180,10 @@ fn parse_type_ptr(field_ident: &Ident, tptr: TypePtr, query_generator: TokenStre
                                     // query: String
                                     if let Some(val) = self.#field_ident {
                                         unsafe {
-                                            query += &format!("{}={}&", stringify!(#field_ident), *val);
+                                            let val: String = (*val).to_string();
+                                            if !val.is_empty() {
+                                                query += &format!("{}={}&", stringify!(#field_ident), *val);
+                                            }
                                         }
                                     }
                                 }
@@ -195,7 +201,10 @@ fn parse_type_ptr(field_ident: &Ident, tptr: TypePtr, query_generator: TokenStre
                                     #query_generator
                                     // query: String
                                     if let Some(val) = self.#field_ident {
-                                        query += &format!("{}={}&", stringify!(#field_ident), val);
+                                        let val: String = val.to_string();
+                                        if !val.is_empty() {
+                                            query += &format!("{}={}&", stringify!(#field_ident), val);
+                                        }
                                     }
                                 }
                             }
@@ -230,7 +239,10 @@ fn parse_type_ptr(field_ident: &Ident, tptr: TypePtr, query_generator: TokenStre
                     // query: String
                     if !self.#field_ident.is_null() {
                         unsafe {
-                            query += &format!("{}={}&", stringify!(#field_ident), *self.#field_ident);
+                            let val: String = (*self.#field_ident).to_string();
+                            if !val.is_empty() {
+                                query += &format!("{}={}&", stringify!(#field_ident), *self.#field_ident);
+                            }
                         }
                     }
                 }
@@ -308,7 +320,9 @@ fn parse_ptr_slice(field_ident: &Ident, tpath: TypePath, query_generator: TokenS
                         .fold(String::new(), |acc, v| format!("{}{},", acc, v));
                 }
                 val.pop();
-                query += &format!("{}={}&", stringify!(#field_ident), val);
+                if !val.is_empty() {
+                    query += &format!("{}={}&", stringify!(#field_ident), val);
+                }
             }
         }
     }
@@ -331,7 +345,9 @@ fn parse_slice_ptr(field_ident: &Ident, tpath: TypePath, query_generator: TokenS
                 }
             }
             val.pop();
-            query += &format!("{}={}&", stringify!(#field_ident), val);
+            if !val.is_empty() {
+                query += &format!("{}={}&", stringify!(#field_ident), val);
+            }
         }
     }
 }
@@ -352,7 +368,9 @@ fn parse_ptr_slice_ptr(field_ident: &Ident, tpath: TypePath, query_generator: To
                     }
                 }
                 val.pop();
-                query += &format!("{}={}&", stringify!(#field_ident), val);
+                if !val.is_empty() {
+                    query += &format!("{}={}&", stringify!(#field_ident), val);
+                }
             }
         }
     }
@@ -462,7 +480,9 @@ fn parse_slice(field_ident: &Ident, tpath: TypePath, query_generator: TokenStrea
             let mut val: String = self.#field_ident.iter()
                 .fold(String::new(), |acc, v| format!("{}{},", acc, v));
             val.pop();
-            query += &format!("{}={}&", stringify!(#field_ident), val);
+            if !val.is_empty() {
+                query += &format!("{}={}&", stringify!(#field_ident), val);
+            }
         }
     }
 }
@@ -478,7 +498,10 @@ fn parse_option(field_ident: &Ident, tpath: TypePath, query_generator: TokenStre
                     #query_generator
                     // query: String
                     if let Some(val) = &self.#field_ident {
-                        query += &format!("{}={}&", stringify!(#field_ident), val);
+                        let val: String = val.to_string();
+                        if !val.is_empty() {
+                            query += &format!("{}={}&", stringify!(#field_ident), val);
+                        }
                     }
                 }
             }
@@ -494,7 +517,10 @@ fn parse_option(field_ident: &Ident, tpath: TypePath, query_generator: TokenStre
                         if let Some(val) = &self.#field_ident {
                             if !val.is_null() {
                                 unsafe {
-                                    query += &format!("{}={}&", stringify!(#field_ident), val.as_ref().unwrap());
+                                    let val: String = (val.as_ref().unwrap()).to_string();
+                                    if !val.is_empty() {
+                                        query += &format!("{}={}&", stringify!(#field_ident), val);
+                                    }
                                 }
                             }
                         }
@@ -513,7 +539,10 @@ fn parse_option(field_ident: &Ident, tpath: TypePath, query_generator: TokenStre
                         #query_generator
                         // query: String
                         if let Some(val) = &self.#field_ident {
-                            query += &format!("{}={}&", stringify!(#field_ident), val);
+                            let val: String = val.to_string();
+                            if !val.is_empty() {
+                                query += &format!("{}={}&", stringify!(#field_ident), val);
+                            }
                         }
                     }
                 }
@@ -552,7 +581,10 @@ fn parse_impl_display(field_ident: &Ident, query_generator: TokenStream2) -> Tok
     quote! {
         #query_generator
         // query: String
-        query += &format!("{}={}&", stringify!(#field_ident), self.#field_ident);
+        let val: String = self.#field_ident.to_string();
+        if !val.is_empty() {
+            query += &format!("{}={}&", stringify!(#field_ident), val);
+        }
     }
 }
 
