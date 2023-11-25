@@ -194,7 +194,7 @@ fn vector_types() {
 
 
 #[test]
-fn ptr_struct() {
+fn ptr_types() {
     let ptr_slice_u8: &[u8] = &[1, 2, 3];
 
     let param1: PtrTypes = PtrTypes {
