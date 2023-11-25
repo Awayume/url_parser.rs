@@ -1,8 +1,6 @@
 // SPDX-FileCopyrightText: 2023 Awayume <dev@awayume.jp>
 // SPDX-License-Identifier: Apache-2.0
 
-use std::str::FromStr;
-
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
@@ -280,20 +278,38 @@ fn parse_type_ptr(field_ident: &Ident, tptr: TypePtr, query_generator: TokenStre
                     _ => false,
                 }
             }) {
-                let size: usize = ttuple.elems.len();
-                let mut template: String = "{},".to_string().repeat(size);
-                template.pop();
-                let mut values: TokenStream2 = TokenStream2::new();
-                for i in 0..size {
-                    let i: TokenStream2 = TokenStream2::from_str(&i.to_string()).unwrap();
-                    values = quote!(#values (*self.#field_ident).#i,);
+                let mut tuple_apd_query_generator: TokenStream2 = quote! {
+                    let mut values: String = Default::default();
+                };
+                for (i, elm) in ttuple.elems.iter().enumerate() {
+                    let idx: TokenStream2 = i.to_string().parse().unwrap();
+                    if let Type::Ptr(_) = elm {
+                        tuple_apd_query_generator = quote! {
+                            #tuple_apd_query_generator
+                            unsafe {
+                                let value = (*self.#field_ident).#idx;
+                                if !value.is_null() {
+                                    values += &format!("{}," *value);
+                                }
+                            }
+                        };
+                    } else {
+                        tuple_apd_query_generator = quote! {
+                            #tuple_apd_query_generator
+                            unsafe {
+                                values += &format!("{},", (*self.#field_ident).#idx);
+                            }
+                        };
+                    }
                 }
                 quote! {
                     #query_generator
                     // query: String
                     if !self.#field_ident.is_null() {
-                        unsafe {
-                            query += &format!(#template, #values);
+                        #tuple_apd_query_generator
+                        values.pop();
+                        if values.len() != 0 {
+                            query += &format!("{}={}&", stringify!(#field_ident), values);
                         }
                     }
                 }
@@ -412,7 +428,7 @@ fn parse_type_slice(field_ident: &Ident, tslice: TypeSlice, query_generator: Tok
 }
 
 
-fn parse_type_tuple(field_ident: &Ident, ttuple: TypeTuple, mut query_generator: TokenStream2) -> TokenStream2 {
+fn parse_type_tuple(field_ident: &Ident, ttuple: TypeTuple, query_generator: TokenStream2) -> TokenStream2 {
     if ttuple.elems.iter().all(|ty: &Type| -> bool {
         match ty {
             Type::Path(tpath) => !(is_option(&tpath) || is_vec(&tpath)),
@@ -433,36 +449,36 @@ fn parse_type_tuple(field_ident: &Ident, ttuple: TypeTuple, mut query_generator:
             _ => false,
         }
     }) {
-        query_generator = quote! {
-            #query_generator
-            // query: String
-            query += &format!("{}=", stringify!(#field_ident));
+        let mut tuple_apd_query_generator: TokenStream2 = quote! {
+            let mut values: String = Default::default();
         };
         for (i, val) in ttuple.elems.iter().enumerate() {
-            let idx: TokenStream2 = TokenStream2::from_str(&i.to_string()).unwrap();
+            let idx: TokenStream2 = i.to_string().parse().unwrap();
             if let Type::Ptr(_) = val {
-                query_generator = quote! {
-                    #query_generator
+                tuple_apd_query_generator = quote! {
+                    #tuple_apd_query_generator
                     if !self.#field_ident.#idx.is_null() {
                         unsafe {
-                            // query: String
-                            query += &format!("{},", *self.#field_ident.#idx);
+                            values += &format!("{},", *self.#field_ident.#idx);
                         }
                     }
                 };
             } else {
-                query_generator = quote! {
-                    #query_generator
+                tuple_apd_query_generator = quote! {
+                    #tuple_apd_query_generator
                     // query: String
-                    query += &format!("{},", self.#field_ident.#idx);
+                    values += &format!("{},", self.#field_ident.#idx);
                 };
             }
         }
         quote! {
             #query_generator
             // query: String
-            query.pop();
-            query += "&";
+            #tuple_apd_query_generator
+            if values.len() != 0 {
+                values.pop();
+                query += &format!("{}={}&", stringify!(#field_ident), values);
+            }
         }
     } else {
         unsupported_field_type_error(field_ident, query_generator)
