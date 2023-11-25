@@ -360,17 +360,20 @@ fn parse_slice_ptr(field_ident: &Ident, tpath: TypePath, query_generator: TokenS
         quote! {
             #query_generator
             // query: String
-            let mut val: String = Default::default();
+            let mut values: String = Default::default();
             for v in self.#field_ident.clone() {
                 if !v.is_null() {
                     unsafe {
-                        val += &format!("{}{},", val, v.as_ref().unwrap());
+                        let val: String = v.as_ref().unwrap().to_string();
+                        if !val.is_empty() {
+                            values += &format!("{},", val);
+                        }
                     }
                 }
             }
-            val.pop();
-            if !val.is_empty() {
-                query += &format!("{}={}&", stringify!(#field_ident), val);
+            values.pop();
+            if !values.is_empty() {
+                query += &format!("{}={}&", stringify!(#field_ident), values);
             }
         }
     }
@@ -385,15 +388,20 @@ fn parse_ptr_slice_ptr(field_ident: &Ident, tpath: TypePath, query_generator: To
             #query_generator
             // query: String
             if !self.#field_ident.is_null() {
-                let mut val: String = Default::default();
+                let mut values: String = Default::default();
                 unsafe {
                     for v in *self.#field_ident {
-                        val += &format!("{}{},", val, v.as_ref().unwrap());
+                        if !v.is_null() {
+                            let val: String = v.as_ref().unwrap().to_string();
+                            if !val.is_empty() {
+                                values += &format!("{},", val);
+                            }
+                        }
                     }
                 }
-                val.pop();
-                if !val.is_empty() {
-                    query += &format!("{}={}&", stringify!(#field_ident), val);
+                values.pop();
+                if !values.is_empty() {
+                    query += &format!("{}={}&", stringify!(#field_ident), values);
                 }
             }
         }
