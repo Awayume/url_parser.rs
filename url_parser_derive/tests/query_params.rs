@@ -230,7 +230,7 @@ fn ptr_types() {
     };
     assert_eq!(
         param2.to_query_params(),
-        "?array_ptr_u8=1,2 3&tuple_ptr_u8=1&slice_ptr_u8=1,2,3&opt_ptr_u8=1&vec_ptr_u8=1,2 3".to_string(),
+        "?array_ptr_u8=1,2,3&tuple_ptr_u8=1&slice_ptr_u8=1,2,3&opt_ptr_u8=1&vec_ptr_u8=1,2,3".to_string(),
     );
 
     let param3: PtrTypes = PtrTypes {
