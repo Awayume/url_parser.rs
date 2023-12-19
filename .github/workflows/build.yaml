@@ -36,7 +36,7 @@ jobs:
           RUSTFLAGS: '--cfg reqwest_unstable'
 
       - name: Archive
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: 'onyxwall_v${{ env.version }}@${{ env.commit }}'
           path: |
